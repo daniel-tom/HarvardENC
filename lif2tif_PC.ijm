@@ -8,8 +8,8 @@ run("Close All");
 //user select .lif file, get total file count in .lif
 run("Bio-Formats Macro Extensions");
 file = File.openDialog("Choose a file");
-Ext.setId(file);
-Ext.getSeriesCount(seriesCount);
+Ext.setId(file);//-- Initializes the given id (filename).
+Ext.getSeriesCount(seriesCount);//-- Gets the number of image series in the active dataset.
 print(file);
 
 var fileIndex;
@@ -26,14 +26,18 @@ for(i=1;i<=seriesCount;i++)
  {
   run("Bio-Formats Importer", "open=["+file+"] color_mode=Default view=Hyperstack stack_order=XYCZT series_"+i);
   
-  if( lastIndexOf(getTitle(), "Series") > 0 )
+  if( lastIndexOf(getTitle(), "Series") > 0 ) // Don't know what this does, but seems be be associated with "Series" in filename
    {
-    filename=substring( getTitle(), lastIndexOf( getTitle(),"-")+2, lastIndexOf(getTitle(), "Series") );
-    if( filename == "") filename=substring( getTitle(), lastIndexOf(getTitle(), "Series"), lengthOf(getTitle()));
+    filename=substring( getTitle(), lastIndexOf( getTitle(),"-")+2, lastIndexOf(getTitle(), "Series") );  // 
+    print("a"+i);
+    if( filename == "") // 
+    filename=substring( getTitle(), lastIndexOf(getTitle(), "Series"), lengthOf(getTitle()));
+print("b"+i);
    }
-  else
+  else // Does not contain "Series" in filename, contains at least two files, if one file, errors in filename
     filename=substring( getTitle(), lastIndexOf( getTitle(),"-")+2, lengthOf(getTitle()) );  
-  print(filename);
+      print("c"+i);
+      print(filename);
   // replace any \ or / or space sign with _ in the filename
   filename=replace(filename, "\\", "_");
   filename=replace(filename, "/", "_");
