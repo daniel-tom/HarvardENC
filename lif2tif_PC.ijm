@@ -1,3 +1,5 @@
+By Lai Ding
+
 //lif2tif      PC version.
 
 //clear ImageJ window
