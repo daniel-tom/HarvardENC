@@ -1,0 +1,81 @@
+//lif2tif      PC version.  Written by Lai Ding (BWIN)
+
+//clear ImageJ window
+setBatchMode(true);
+run("Close All");
+
+//user select .lif file, get total file count in .lif
+run("Bio-Formats Macro Extensions");
+file = File.openDialog("Choose a file");
+Ext.setId(file);//-- Initializes the given id (filename).
+Ext.getSeriesCount(seriesCount);//-- Gets the number of image series in the active dataset.
+
+//user inputs basic tiling parameters
+Dialog.create("Tiling Parameters");
+Dialog.addNumber("grid_size_x", 0);
+Dialog.addNumber("grid_size_y", 0);  
+Dialog.addNumber("overlap", 10);
+Dialog.show();
+grid_size_x=Dialog.getNumber(); grid_size_y=Dialog.getNumber(); overlap=Dialog.getNumber();
+
+var fileIndex;
+
+//creates folder with the same .lif name to store all individual tif images.
+dir=substring(file, 0, lastIndexOf(file, "\\")+1);
+folder_name=substring(file, lastIndexOf(file, "\\")+1, indexOf(file, ".lif") );
+folder_name=replace(folder_name, " ", "_");
+exec("cmd","/c","md", dir+folder_name);
+dir=dir+folder_name+"\\";
+
+//saves each individual data set into Tiff in the subfolder folder_name
+for(i=1;i<=seriesCount;i++)
+ {
+  run("Bio-Formats Importer", "open=["+file+"] color_mode=Default view=Hyperstack stack_order=XYCZT series_"+i);
+  
+  if( lastIndexOf(getTitle(), "Series") > 0 ) // Don't know what this does, but seems be be associated with "Series" in filename
+   {
+    filename=substring( getTitle(), lastIndexOf( getTitle(),"-")+2, lastIndexOf(getTitle(), "Series") );  // 
+    print("a"+i);
+    if( filename == "") // 
+    filename=substring( getTitle(), lastIndexOf(getTitle(), "Series"), lengthOf(getTitle()));
+print("b"+i);
+   }
+  else // Does not contain "Series" in filename, contains at least two files, if one file, errors in filename
+    filename=substring( getTitle(), lastIndexOf( getTitle(),"-")+2, lengthOf(getTitle()) );  
+      print("c"+i);
+      print(filename);
+  // replace any \ or / or space sign with _ in the filename
+  filename=replace(filename, "\\", "_");
+  filename=replace(filename, "/", "_");
+  //filename=replace(filename, " ", "_");
+  
+  fileIndex=0;
+  saveFile(filename);
+  //print(dir+filename+".tif"); 
+  //saveAs("Tiff", dir+filename+".tif");
+  close();
+ }
+setBatchMode(false); 
+run("Grid/Collection stitching", "type=[Grid: column-by-column] order=[Up & Right] grid_size_x="+grid_size_x+" grid_size_y="+grid_size_y+" tile_overlap="+overlap+" first_file_index_i=0 directory=["+dir+"] file_names="+filename+"_{iii}.tif output_textfile_name=TileConfiguration.txt fusion_method=[Linear Blending] regression_threshold=0.30 max/avg_displacement_threshold=2.50 absolute_displacement_threshold=3.50 compute_overlap computation_parameters=[Save memory (but be slower)] image_output=[Fuse and display]");
+saveAs("Tiff", dir+getTitle()+".tif");
+//close();
+
+print("macro finishes");
+
+// if files have same name, use "_x" (x as number) to indicate.
+function saveFile(name)
+ {
+  if( File.exists(dir+name+"_"+IJ.pad(fileIndex,3)+".tif") != 1 )
+   {
+    print(dir+name+"_"+IJ.pad(fileIndex,3)+".tif");
+    saveAs("Tiff", dir+name+"_"+IJ.pad(fileIndex,3)+".tif");
+   }
+  else
+   {
+    fileIndex++;
+    while( File.exists(dir+name+"_"+IJ.pad(fileIndex,3)+".tif") == 1 )
+      fileIndex++;
+    saveFile(name);
+   }
+ }
+
